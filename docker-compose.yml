@@ -10,6 +10,8 @@ services:
    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
    volumes:
      - ./certs:/usr/share/elasticsearch/config/certs
+     - .:/data_dirs
+   user: "0"
    command: >
      bash -c '
        if [ x${ELASTIC_PASSWORD} == x ]; then
@@ -52,10 +54,17 @@ services:
          bin/elasticsearch-certutil cert --silent --pem -out config/certs/certs.zip --in config/certs/instances.yml --ca-cert config/certs/ca/ca.crt --ca-key config/certs/ca/ca.key;
          unzip config/certs/certs.zip -d config/certs;
        fi;
-       echo "Setting file permissions"
-       chown -R root:root config/certs;
-       find . -type d -exec chmod 750 \{\} \;;
-       find . -type f -exec chmod 640 \{\} \;;
+       #echo "Setting file permissions"
+       #chown -R 1000:0 config/certs;
+       #find . -type d -exec chmod 750 \{\} \;;
+       #find . -type f -exec chmod 640 \{\} \;;
+       for dir in `echo ${CERTS} ${ES_DATA01} ${ES_DATA02} ${ES_DATA03} ${KIBANA} ${METRICBEAT01}`
+       do
+       echo "mkdir and chmod to 1000:0 for /data_dirs/${dir}"
+       mkdir -p /data_dirs/${dir}
+       chown -R 1000:0 /data_dirs/${dir}
+       done
+
        echo "Waiting for Elasticsearch availability";
        until curl -s --cacert config/certs/ca/ca.crt https://es01:9200 | grep -q "missing authentication credentials"; do sleep 30; done;
        until curl -s --cacert config/certs/ca/ca.crt https://es02:9200 | grep -q "missing authentication credentials"; do sleep 30; done;
@@ -78,8 +87,8 @@ services:
    labels:
      co.elastic.logs/module: elasticsearch
    volumes:
-     - ./certs:/usr/share/elasticsearch/config/certs
-     - ./es/01:/usr/share/elasticsearch/data
+     - ./${CERTS}:/usr/share/elasticsearch/config/certs
+     - ./${ES_DATA01}:/usr/share/elasticsearch/data
    ports:
      - 9200:9200
    environment:
@@ -125,7 +134,7 @@ services:
      co.elastic.logs/module: elasticsearch
    volumes:
      - ./certs:/usr/share/elasticsearch/config/certs:ro
-     - ./es/02:/usr/share/elasticsearch/data
+     - ./${ES_DATA02}:/usr/share/elasticsearch/data
    ports:
      - 9201:9200
    environment:
@@ -170,8 +179,8 @@ services:
    labels:
      co.elastic.logs/module: elasticsearch
    volumes:
-     - ./certs:/usr/share/elasticsearch/config/certs:ro
-     - ./es/03:/usr/share/elasticsearch/data
+     - ./${CERTS}:/usr/share/elasticsearch/config/certs:ro
+     - ./${ES_DATA02}:/usr/share/elasticsearch/data
    ports:
      - 9203:9200
    environment:
@@ -219,8 +228,8 @@ services:
     labels:
       co.elastic.logs/module: kibana
     volumes:
-      - ./certs:/usr/share/kibana/config/certs:ro
-      - ./kibana:/usr/share/kibana/data
+      - ./${CERTS}:/usr/share/kibana/config/certs:ro
+      - ./${KIBANA}:/usr/share/kibana/data
     ports:
       - ${KIBANA_PORT}:5601
     environment:
@@ -242,3 +251,26 @@ services:
       interval: 10s
       timeout: 10s
       retries: 120
+
+ metricbeat01:
+   depends_on:
+     es01:
+       condition: service_healthy
+     kibana:
+       condition: service_healthy
+   image: docker.elastic.co/beats/metricbeat:${STACK_VERSION}
+   user: root
+   volumes:
+     - ./${CERTS}:/usr/share/metricbeat/certs
+     - ./${METRICBEAT01}:/usr/share/metricbeat/data
+     - "./metricbeat.yml:/usr/share/metricbeat/metricbeat.yml:ro"
+     - "/var/run/docker.sock:/var/run/docker.sock:ro"
+     - "/sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro"
+     - "/proc:/hostfs/proc:ro"
+     - "/:/hostfs:ro"
+   environment:
+     - ELASTIC_USER=elastic
+     - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+     - ELASTIC_HOSTS=https://es01:9200
+     - KIBANA_HOSTS=http://kibana:5601
+     - LOGSTASH_HOSTS=http://logstash01:9600
