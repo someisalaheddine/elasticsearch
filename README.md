@@ -1,0 +1,2 @@
+# elasticsearch
+Docker based instalation
