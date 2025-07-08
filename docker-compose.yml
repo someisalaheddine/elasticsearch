@@ -58,19 +58,18 @@ services:
        #chown -R 1000:0 config/certs;
        #find . -type d -exec chmod 750 \{\} \;;
        #find . -type f -exec chmod 640 \{\} \;;
-       for dir in `echo ${CERTS} ${ES_DATA01} ${ES_DATA02} ${ES_DATA03} ${KIBANA} ${METRICBEAT01}`
-       do
-       echo "mkdir and chmod to 1000:0 for /data_dirs/${dir}"
-       mkdir -p /data_dirs/${dir}
-       chown -R 1000:0 /data_dirs/${dir}
-       done
+       #
+       mkdir -p /data_dirs/{$CERTS,$ES_DATA01,$ES_DATA02,$ES_DATA03,$KIBANA,$METRICBEAT01}
+       chown -R 1000:0  /data_dirs/{$CERTS,$ES_DATA01,$ES_DATA02,$ES_DATA03,$KIBANA,$METRICBEAT01}
+
 
        echo "Waiting for Elasticsearch availability";
        until curl -s --cacert config/certs/ca/ca.crt https://es01:9200 | grep -q "missing authentication credentials"; do sleep 30; done;
-       until curl -s --cacert config/certs/ca/ca.crt https://es02:9200 | grep -q "missing authentication credentials"; do sleep 30; done;
-       until curl -s --cacert config/certs/ca/ca.crt https://es03:9200 | grep -q "missing authentication credentials"; do sleep 30; done;
+       echo "ES01 available"
        echo "Setting kibana_system password";
-       until curl -s -X POST --cacert config/certs/ca/ca.crt -u "elastic:${ELASTIC_PASSWORD}" -H "Content-Type: application/json" https://es01:9200/_security/user/kibana/_password -d "{\"password\":\"${KIBANA_PASSWORD}\"}" | grep -q "^{}"; do sleep 10; done;
+
+       until curl  -X GET  --cacert config/certs/ca/ca.crt  -u ${KIBANA_USER}:${KIBANA_PASSWORD} "https://es01:9200/_security/_authenticate" |  grep -q  enabled ; do curl   -X POST --cacert config/certs/ca/ca.crt -u "elastic:${ELASTIC_PASSWORD}" -H "Content-Type: application/json" https://es01:9200/_security/user/${KIBANA_USER}/_password -d "{\"password\":\"${KIBANA_PASSWORD}\"}" ;sleep 10; done;
+       echo "Kibana user password set succesfully"
        echo "All done!";
      '
    healthcheck:
@@ -235,7 +234,7 @@ services:
     environment:
       - SERVERNAME=kibana
       - ELASTICSEARCH_HOSTS=https://es01:9200
-      - ELASTICSEARCH_USERNAME=kibana
+      - ELASTICSEARCH_USERNAME=${KIBANA_USER}
       - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD}
       - ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES=config/certs/ca/ca.crt
       - XPACK_SECURITY_ENCRYPTIONKEY=${ENCRYPTION_KEY}
