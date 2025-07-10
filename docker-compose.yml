@@ -179,7 +179,7 @@ services:
      co.elastic.logs/module: elasticsearch
    volumes:
      - ./${CERTS}:/usr/share/elasticsearch/config/certs:ro
-     - ./${ES_DATA02}:/usr/share/elasticsearch/data
+     - ./${ES_DATA03}:/usr/share/elasticsearch/data
    ports:
      - 9203:9200
    environment:
