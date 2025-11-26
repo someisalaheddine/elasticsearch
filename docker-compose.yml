@@ -89,6 +89,7 @@ services:
     volumes:
       - ./${CERTS}:/usr/share/elasticsearch/config/certs
       - ./${ES_DATA01}:/usr/share/elasticsearch/data
+      - /home/ssomei/Desktop/work/elasticsearch/snapshots:/snapshots
     ports:
       - 9200:9200
     environment:
@@ -111,6 +112,8 @@ services:
       - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
       - xpack.security.transport.ssl.verification_mode=certificate
       - xpack.license.self_generated.type=${LICENSE}
+      - path.repo=/snapshots
+      - http.max_content_length=2147483647b
     mem_limit: ${ES_MEM_LIMIT}
     ulimits:
       memlock:
@@ -136,6 +139,7 @@ services:
     volumes:
       - ./certs:/usr/share/elasticsearch/config/certs:ro
       - ./${ES_DATA02}:/usr/share/elasticsearch/data
+      - /home/ssomei/Desktop/work/elasticsearch/snapshots:/snapshots
     environment:
       - node.name=es02
       - cluster.name=cls0
@@ -156,6 +160,8 @@ services:
       - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
       - xpack.security.transport.ssl.verification_mode=certificate
       - xpack.license.self_generated.type=${LICENSE}
+      - path.repo=/snapshots
+      - http.max_content_length=2147483647b
     mem_limit: ${ES_MEM_LIMIT}
     ulimits:
       memlock:
@@ -181,6 +187,7 @@ services:
     volumes:
       - ./certs:/usr/share/elasticsearch/config/certs:ro
       - ./${ES_DATA03}:/usr/share/elasticsearch/data
+      - /home/ssomei/Desktop/work/elasticsearch/snapshots:/snapshots
     environment:
       - node.name=es03
       - cluster.name=cls0
@@ -201,6 +208,8 @@ services:
       - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
       - xpack.security.transport.ssl.verification_mode=certificate
       - xpack.license.self_generated.type=${LICENSE}
+      - path.repo=/snapshots
+      - http.max_content_length=2147483647b
     mem_limit: ${ES_MEM_LIMIT}
     ulimits:
       memlock:
@@ -226,6 +235,7 @@ services:
     volumes:
       - ./certs:/usr/share/elasticsearch/config/certs:ro
       - ./${ES_DATA04}:/usr/share/elasticsearch/data
+      - /home/ssomei/Desktop/work/elasticsearch/snapshots:/snapshots
     environment:
       - node.name=es04
       - cluster.name=cls0
@@ -246,6 +256,8 @@ services:
       - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
       - xpack.security.transport.ssl.verification_mode=certificate
       - xpack.license.self_generated.type=${LICENSE}
+      - path.repo=/snapshots
+      - http.max_content_length=2147483647b
     mem_limit: ${ES_MEM_LIMIT}
     ulimits:
       memlock:
@@ -271,6 +283,7 @@ services:
     volumes:
       - ./certs:/usr/share/elasticsearch/config/certs:ro
       - ./${ES_DATA05}:/usr/share/elasticsearch/data
+      - /home/ssomei/Desktop/work/elasticsearch/snapshots:/snapshots
     environment:
       - node.name=es05
       - cluster.name=cls0
@@ -291,6 +304,8 @@ services:
       - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
       - xpack.security.transport.ssl.verification_mode=certificate
       - xpack.license.self_generated.type=${LICENSE}
+      - path.repo=/snapshots
+      - http.max_content_length=2147483647b
     mem_limit: ${ES_MEM_LIMIT}
     ulimits:
       memlock:
